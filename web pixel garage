@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Vehicle</title>
+<style>
+:root {
+  --bg:#111118;
+  --card:#1c1c27;
+  --accent:#d946ef;
+  --text:#f5f3ff;
+  --muted:#a1a1b5;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  padding:16px;
+  background:radial-gradient(ellipse at top,#30203d,var(--bg) 60%);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+main { max-width:650px; margin:auto; }
+header { text-align:center; padding:28px 0 20px; }
+.logo {
+  display:inline-grid;
+  place-items:center;
+  width:65px;
+  height:65px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#9333ea,#ec4899);
+  font-size:34px;
+}
+h1 { font-size:27px; letter-spacing:2px; margin:12px 0 5px; }
+.subtitle { color:var(--muted); font-size:13px; }
+.card {
+  background:var(--card);
+  border:1px solid #343443;
+  border-radius:20px;
+  padding:17px;
+  margin-bottom:14px;
+}
+h2 { font-size:16px; margin:0 0 15px; }
+.upload {
+  display:block;
+  text-align:center;
+  padding:24px 12px;
+  border:1px dashed #777087;
+  border-radius:15px;
+  cursor:pointer;
+}
+.upload .emoji { font-size:36px; }
+.upload p { color:var(--muted); font-size:13px; }
+input[type=file] {
+  display:block;
+  width:100%;
+  margin-top:12px;
+  color:var(--muted);
+}
+button {
+  border:0;
+  border-radius:13px;
+  padding:14px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+.primary {
+  background:linear-gradient(100deg,#9333ea,#db4ca6);
+  color:white;
+  width:100%;
+  margin-top:14px;
+}
+.secondary {
+  background:#30303f;
+  border:1px solid #444456;
+  color:white;
+  width:100%;
+}
+button:disabled { opacity:.4; cursor:default; }
+.setting {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin:18px 0 8px;
+  font-size:14px;
+}
+output {
+  color:#f0abfc;
+  font-variant-numeric:tabular-nums;
+}
+input[type=range] {
+  width:100%;
+  accent-color:var(--accent);
+}
+.preview {
+  min-height:230px;
+  display:grid;
+  place-items:center;
+  overflow:auto;
+  border-radius:14px;
+  background-color:#14141c;
+  background-image:
+    linear-gradient(45deg,#252532 25%,transparent 25%),
+    linear-gradient(-45deg,#252532 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#252532 75%),
+    linear-gradient(-45deg,transparent 75%,#252532 75%);
+  background-size:20px 20px;
+  background-position:0 0,0 10px,10px -10px,-10px 0;
+}
+canvas {
+  display:block;
+  max-width:100%;
+  max-height:60vh;
+  object-fit:contain;
+  image-rendering:pixelated;
+}
+.placeholder {
+  color:var(--muted);
+  font-size:13px;
+  text-align:center;
+  padding:25px;
+}
+.actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.status {
+  min-height:18px;
+  font-size:12px;
+  color:#f0abfc;
+  margin-top:12px;
+  overflow-wrap:anywhere;
+}
+.note {
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.6;
+}
+footer {
+  color:#777787;
+  text-align:center;
+  padding:12px 0 25px;
+  font-size:11px;
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="logo">🚘</div>
+  <h1>PIXEL VEHICLE</h1>
+  <div class="subtitle">YOUR RIDE. YOUR PIXEL WORLD.</div>
+</header>
+
+<section class="card">
+  <h2>01 / Fahrzeug auswählen</h2>
+  <label class="upload" for="photo">
+    <div class="emoji">🚗</div>
+    <strong>Foto auswählen</strong>
+    <p>Auto · E-Scooter · Motorrad</p>
+    <span style="color:#f0abfc">Tippen, um Galerie zu öffnen</span>
+  </label>
+  <input id="photo" type="file" accept="image/*">
+  <div id="status" class="status" aria-live="polite">Warte auf dein Foto ...</div>
+</section>
+
+<section class="card">
+  <h2>02 / Pixel-Einstellungen</h2>
+
+  <div class="setting">
+    <label for="pixels">Anzahl der Bildpixel</label>
+    <output id="pixelsOut">24</output>
+  </div>
+  <input id="pixels" type="range" min="8" max="100000" step="1" value="24">
+
+  <p class="note">Mehr Pixel ergeben feinere Details. Weniger Pixel ergeben einen groben Pixel-Look.</p>
+
+  <button id="create" class="primary" disabled>✦ PIXEL-FAHRZEUG ERSTELLEN</button>
+</section>
+
+<section class="card">
+  <h2>03 / Deine Vorschau</h2>
+  <div class="preview">
+    <div id="placeholder" class="placeholder">Dein fertiges Pixel-Fahrzeug wird hier angezeigt.</div>
+    <canvas id="result" hidden></canvas>
+  </div>
+  <div class="actions">
+    <button id="reset" class="secondary" disabled>Zurücksetzen</button>
+    <button id="save" class="secondary" disabled>↓ PNG speichern</button>
+  </div>
+  <p class="note">Auf dem iPhone kannst du das fertige Bild über das Teilen-Menü sichern.</p>
+</section>
+
+<section class="card">
+  <h2>Über diese Version</h2>
+  <p class="note">Kostenlos und ohne Server-Upload. Die Bearbeitung erfolgt lokal auf deinem Gerät.</p>
+  <p class="note">Die angegebene Pixelanzahl ist die tatsächliche Breite mal Höhe des internen Pixelbildes. Das exportierte Bild wird zur besseren Sichtbarkeit vergrößert.</p>
+</section>
+
+<footer>PIXEL VEHICLE · LOCAL EDITION</footer>
+</main>
+
+<script>
+const photo = document.getElementById("photo");
+const canvas = document.getElementById("result");
+const ctx = canvas.getContext("2d");
+const placeholder = document.getElementById("placeholder");
+const status = document.getElementById("status");
+const createBtn = document.getElementById("create");
+const saveBtn = document.getElementById("save");
+const resetBtn = document.getElementById("reset");
+const pixels = document.getElementById("pixels");
+const pixelsOut = document.getElementById("pixelsOut");
+
+let original = null;
+let filename = "pixel_vehicle.png";
+let actualPixelCount = 0;
+
+function updatePixels() {
+  pixelsOut.textContent = Number(pixels.value).toLocaleString("de-DE");
+}
+
+pixels.addEventListener("input", updatePixels);
+updatePixels();
+
+photo.addEventListener("change", () => {
+  const file = photo.files && photo.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    status.textContent = "Bitte wähle eine Bilddatei aus.";
+    return;
+  }
+
+  status.textContent = "Foto wird geladen ...";
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+
+  img.onload = () => {
+    original = img;
+    filename = (file.name.replace(/\.[^.]+$/, "") || "pixel_vehicle") + "_pixel.png";
+    createBtn.disabled = false;
+    resetBtn.disabled = false;
+    saveBtn.disabled = true;
+    canvas.hidden = true;
+    placeholder.hidden = false;
+    placeholder.textContent = "Foto geladen! Tippe auf Pixel-Fahrzeug erstellen.";
+    status.textContent = "Foto bereit.";
+    URL.revokeObjectURL(url);
+  };
+
+  img.onerror = () => {
+    status.textContent = "Bild konnte nicht geladen werden.";
+    URL.revokeObjectURL(url);
+  };
+
+  img.src = url;
+});
+
+function calculateDimensions(target, aspect) {
+  let w = Math.max(1, Math.round(Math.sqrt(target * aspect)));
+  let h = Math.max(1, Math.round(target / w));
+
+  // Passe die Maße so an, dass w × h genau target ergibt.
+  // Bei Primzahlen ist eine exakte, annähernd quadratische Form nicht möglich.
+  while (w * h > target && w > 1) {
+    w--;
+    h = Math.max(1, Math.floor(target / w));
+  }
+
+  if (w * h < target) {
+    const possibleHeight = Math.floor(target / w);
+    if (possibleHeight >= h) h = possibleHeight;
+  }
+
+  // Das Raster bleibt unter 100.000 Pixeln.
+  while (w * h > 100000) {
+    if (w >= h) w--;
+    else h--;
+  }
+
+  return { w, h };
+}
+
+function pixelate() {
+  if (!original) return;
+
+  createBtn.disabled = true;
+  saveBtn.disabled = true;
+  status.textContent = "Pixel-Bild wird erstellt ...";
+
+  setTimeout(() => {
+    try {
+      const target = Math.max(8, Math.min(100000, Number(pixels.value)));
+      const aspect = original.naturalWidth / original.naturalHeight;
+      const { w, h } = calculateDimensions(target, aspect);
+
+      const small = document.createElement("canvas");
+      small.width = w;
+      small.height = h;
+
+      const sctx = small.getContext("2d", { willReadFrequently: true });
+      sctx.imageSmoothingEnabled = true;
+      sctx.drawImage(original, 0, 0, w, h);
+
+      // Vergrößere das Pixelraster für eine sichtbare Pixel-Optik.
+      // Begrenze die Exportgröße, damit Mobilgeräte nicht überlastet werden.
+      const maxExportSide = 2400;
+      const scale = Math.max(
+        1,
+        Math.min(16, Math.floor(maxExportSide / Math.max(w, h)))
+      );
+
+      canvas.width = w * scale;
+      canvas.height = h * scale;
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(small, 0, 0, canvas.width, canvas.height);
+
+      actualPixelCount = w * h;
+      canvas.hidden = false;
+      placeholder.hidden = true;
+      saveBtn.disabled = false;
+
+      status.textContent =
+        `Fertig: Raster ${w} × ${h} = ${actualPixelCount.toLocaleString("de-DE")} Pixel.`;
+    } catch (error) {
+      console.error(error);
+      status.textContent = "Fehler beim Erstellen. Probiere ein anderes Foto.";
+    } finally {
+      createBtn.disabled = false;
+    }
+  }, 30);
+}
+
+createBtn.addEventListener("click", pixelate);
+
+resetBtn.addEventListener("click", () => {
+  if (!original) return;
+  canvas.hidden = true;
+  placeholder.hidden = false;
+  placeholder.textContent = "Foto geladen! Tippe auf Pixel-Fahrzeug erstellen.";
+  saveBtn.disabled = true;
+  status.textContent = "Vorschau zurückgesetzt.";
+});
+
+saveBtn.addEventListener("click", async () => {
+  if (canvas.hidden) return;
+
+  canvas.toBlob(async blob => {
+    if (!blob) {
+      status.textContent = "PNG konnte nicht erstellt werden.";
+      return;
+    }
+
+    const file = new File([blob], filename, { type: "image/png" });
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files:[file] })) {
+        await navigator.share({ files:[file], title:"Pixel Vehicle" });
+        status.textContent = "Teilen-Menü geöffnet.";
+        return;
+      }
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    status.textContent = "PNG erstellt. Falls nötig, öffne es und nutze Teilen.";
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }, "image/png");
+});
+</script>
+</body>
+</html>
